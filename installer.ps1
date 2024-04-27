@@ -61,15 +61,22 @@ try {
     $gitHubVersion = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt" -UseBasicParsing | Select-Object -ExpandProperty Content
 
     if ($localVersion -ne $gitHubVersion) {
+      Add-Content -Path $logFile -Value "Local version: $localVersion is different from GitHub version: $gitHubVersion"
+
       # download the new version from github
       $repoUrl = "https://github.com/ElTragedy/OverwatchTime/archive/refs/heads/main.zip"
-
 
       # Define the path where you want to save the ZIP file
       $zipPath = "$env:ProgramData\OverwatchTimeData\OverwatchTime.zip"
 
+      # Create a new WebClient object
+      $webClient = New-Object System.Net.WebClient
+
+      # Download the file
+      $webClient.DownloadFile($repoUrl, $zipPath)
+
       # Use Invoke-WebRequest to download the ZIP file
-      Invoke-WebRequest -Uri $repoUrl -OutFile $zipPath
+      #Invoke-WebRequest -Uri $repoUrl -OutFile $zipPath
 
       # Check for a temp folder, if exists, delete it, then create a new one
       $tempFolder = "$env:ProgramData\OverwatchTimeData\temp"
@@ -85,8 +92,26 @@ try {
       # Use Expand-Archive to extract the ZIP file
       Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
 
+      # Remove the ZIP file
+      Remove-Item -Path $zipPath -Force
+
       # We want to replace the following files: version.txt, OverwatchTime.exe,
       # and the images folder
+      
+      # delete the old version.txt, if it exists
+      if(Test-Path $versionFile) {
+        Remove-Item -Path $versionFile -Force
+      }
+
+      # move the new verison.txt to the OverwatchTimeData folder
+      Move-Item "$extractPath\OverwatchTime-main\version.txt" $versionFile -Force
+
+      # Move executable to folder we made, overwrite if it already exists
+
+      #TODO: rename the old exe and then put the new one there. Once the program 
+      # terminates, have it check for the old exe and delete it
+      
+
 
 
     }
