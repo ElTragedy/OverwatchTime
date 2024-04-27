@@ -1,0 +1,2 @@
+python -m PyInstaller --onefile --add-data ".\csvs\*;.\csvs\" --add-data ".\images\*;.\images\" OverwatchTime.py
+
