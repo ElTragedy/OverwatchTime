@@ -1,7 +1,5 @@
-
 # Get the current working directory
 $CurrentDirectory = (Get-Location).Path
-Write-Output "Current directory: $CurrentDirectory"
 
 # Check if we are currently running with administrative privileges
 if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
@@ -33,9 +31,6 @@ $logFile = "$CurrentDirectory\install.log"
 
 Add-Content -Path $logFile -Value "Log file created at $logFile"
 
-Read-Host -Prompt "Press Enter to continue"
-
-
 $StartUpFolder = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs"
 
 try {
@@ -46,10 +41,6 @@ try {
     Add-Content -Path $logFile -Value "Directory created at $StartUpFolder\OverwatchTime"
   }
 
-  # Move executable to folder we made, overwrite if it already exists
-  Copy-Item .\dist\OverwatchTime.exe "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
-  Add-Content -Path $logFile -Value "Executable copied to $StartUpFolder\OverwatchTime"
-
   # Check if the OverwatchTimeData directory exists in program data
   if (-not (Test-Path "$env:ProgramData\OverwatchTimeData")) {
     # Create a new folder in program data
@@ -57,9 +48,65 @@ try {
     Add-Content -Path $logFile -Value "Directory created at $env:ProgramData\OverwatchTimeData"
   }
 
+  # check if 1. version file exists 2. version in OverwatchTimeData is different
+  # from the current version. If so, download the new version from github using wget
+  $versionFile = "$env:ProgramData\OverwatchTimeData\version.txt"
+
+  if (Test-Path $versionFile) {
+    #compare the version in the file to the current version
+    $localVersion = Get-Content .\version.txt
+    
+    # wget https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt
+    # and whatever is in content is the version
+    $gitHubVersion = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt" -UseBasicParsing | Select-Object -ExpandProperty Content
+
+    if ($localVersion -ne $gitHubVersion) {
+      # download the new version from github
+      $repoUrl = "https://github.com/ElTragedy/OverwatchTime/archive/refs/heads/main.zip"
+
+
+      # Define the path where you want to save the ZIP file
+      $zipPath = "$env:ProgramData\OverwatchTimeData\OverwatchTime.zip"
+
+      # Use Invoke-WebRequest to download the ZIP file
+      Invoke-WebRequest -Uri $repoUrl -OutFile $zipPath
+
+      # Check for a temp folder, if exists, delete it, then create a new one
+      $tempFolder = "$env:ProgramData\OverwatchTimeData\temp"
+      if (Test-Path $tempFolder) {
+        Remove-Item -Path $tempFolder -Recurse -Force
+      }
+      # create temp folder
+      New-Item -Path $env:ProgramData\OverwatchTimeData -Name "temp" -ItemType "directory" -ErrorAction Stop
+
+      # Define the path where you want to extract the ZIP file
+      $extractPath = "$env:ProgramData\OverwatchTimeData\temp"
+
+      # Use Expand-Archive to extract the ZIP file
+      Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+      # We want to replace the following files: version.txt, OverwatchTime.exe,
+      # and the images folder
+
+
+    }
+
+
+  }
+
+  # Move executable to folder we made, overwrite if it already exists
+  Copy-Item .\dist\OverwatchTime.exe "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
+  Add-Content -Path $logFile -Value "Executable copied to $StartUpFolder\OverwatchTime"
+
   # Move everything else into the data folder, overwrite if they already exist
-  Move-Item .\* "$env:ProgramData\OverwatchTimeData" -Force -ErrorAction Stop
-  Add-Content -Path $logFile -Value "Files moved to $env:ProgramData\OverwatchTimeData"
+  #
+  #Move-Item .\* "$env:ProgramData\OverwatchTimeData" -Force -ErrorAction Stop
+  #Add-Content -Path $logFile -Value "Files moved to $env:ProgramData\OverwatchTimeData"
+
+  # Add images if any images were added to github
+  # 1st check if the images folder exists in the data folder
+  # 2nd wget the images folder from github and compare differences
+
 }
 catch {
   Add-Content -Path $logFile -Value "An error occurred: $_"
