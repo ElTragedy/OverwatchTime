@@ -155,10 +155,6 @@ def initialize_app():
     # Check for update
 
 def check_and_update():
-    # Check the version with the github version
-    # There is a checkVersion.ps1 in the overwatchTimeData folder that will check the version, run it
-    # if it returns true there is no update, if it returns false there is an update.
-    # if it returns false, prompt the user to update. then call installer.ps1
     # if the user doesn't want to update, then just continue with the program.
     check_version_script = resource_path('checkVersion.ps1')
     installer_script = resource_path('installer.ps1')
