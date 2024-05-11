@@ -33,6 +33,9 @@ Add-Content -Path $logFile -Value "Log file created at $logFile"
 
 $StartUpFolder = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs"
 
+# Program should have 2 use cases.
+# First time install and a version update
+
 try {
   # Check if the OverwatchTime directory exists in the start up folder
   if (-not (Test-Path "$StartUpFolder\OverwatchTime")) {
@@ -46,6 +49,8 @@ try {
     # Create a new folder in program data
     New-Item -Path $env:ProgramData -Name "OverwatchTimeData" -ItemType "directory" -ErrorAction Stop
     Add-Content -Path $logFile -Value "Directory created at $env:ProgramData\OverwatchTimeData"
+    New-TEm -Path $env:ProgramData\OverwatchTimeData -Name "csvs" -ItemType "directory" -ErrorAction Stop
+    Add-Content -Path $logFile -Value "Directory created at $env:ProgramData\OverwatchTimeData\csvs"
   }
 
   # check if 1. version file exists 2. version in OverwatchTimeData is different
@@ -55,7 +60,6 @@ try {
   if (Test-Path $versionFile) {
     #compare the version in the file to the current version
     $localVersion = Get-Content .\version.txt
-    
     # wget https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt
     # and whatever is in content is the version
     $gitHubVersion = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt" -UseBasicParsing | Select-Object -ExpandProperty Content
@@ -74,9 +78,6 @@ try {
 
       # Download the file
       $webClient.DownloadFile($repoUrl, $zipPath)
-
-      # Use Invoke-WebRequest to download the ZIP file
-      #Invoke-WebRequest -Uri $repoUrl -OutFile $zipPath
 
       # Check for a temp folder, if exists, delete it, then create a new one
       $tempFolder = "$env:ProgramData\OverwatchTimeData\temp"
@@ -100,37 +101,77 @@ try {
       
       # delete the old version.txt, if it exists
       if(Test-Path $versionFile) {
+        Add-Content -Path $logFile -Value "Deleting old version.txt"
         Remove-Item -Path $versionFile -Force
       }
 
       # move the new verison.txt to the OverwatchTimeData folder
       Move-Item "$extractPath\OverwatchTime-main\version.txt" $versionFile -Force
+      Add-Content -Path $logFile -Value "Moved new version.txt to $versionFile"
+
+      # delete the old images folder, if it exists
+      if(Test-Path "$env:ProgramData\OverwatchTimeData\images") {
+        Remove-Item -Path "$env:ProgramData\OverwatchTimeData\images" -Recurse -Force
+      }
+
+      # move images folder
+      Move-Item "$extractPath\OverwatchTime-main\images" "$env:ProgramData\OverwatchTimeData" -Force
+
+      # Rename the old exe that is in StartUpFolder\OverwatchTime to OverwatchTime_old.exe
+      $oldExe = "$StartUpFolder\OverwatchTime\OverwatchTime.exe"
+      Move-Item $oldExe "$StartUpFolder\OverwatchTime\OverwatchTime_old.exe" -Force
 
       # Move executable to folder we made, overwrite if it already exists
 
-      #TODO: rename the old exe and then put the new one there. Once the program 
+      # Exe should be in StartUpFolder\OverwatchTime
+
+      Copy-Item "$extractPath\OverwatchTime-main\dist\OverwatchTime.exe" "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
+
       # terminates, have it check for the old exe and delete it
-      
-
-
-
     }
-
-
   }
+  else{
+    # The user does not have a version file so we will download the latest version
+      Add-Content -Path $logFile -Value "Local version does not exist. Downloading the latest version from GitHub."
 
-  # Move executable to folder we made, overwrite if it already exists
-  Copy-Item .\dist\OverwatchTime.exe "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
-  Add-Content -Path $logFile -Value "Executable copied to $StartUpFolder\OverwatchTime"
+      # download the new version from github
+      $repoUrl = "https://github.com/ElTragedy/OverwatchTime/archive/refs/heads/main.zip"
 
-  # Move everything else into the data folder, overwrite if they already exist
-  #
-  #Move-Item .\* "$env:ProgramData\OverwatchTimeData" -Force -ErrorAction Stop
-  #Add-Content -Path $logFile -Value "Files moved to $env:ProgramData\OverwatchTimeData"
+      # Define the path where you want to save the ZIP file
+      $zipPath = "$env:ProgramData\OverwatchTimeData\OverwatchTime.zip"
 
-  # Add images if any images were added to github
-  # 1st check if the images folder exists in the data folder
-  # 2nd wget the images folder from github and compare differences
+      # Create a new WebClient object
+      $webClient = New-Object System.Net.WebClient
+
+      # Download the file
+      $webClient.DownloadFile($repoUrl, $zipPath)
+
+      # Check for a temp folder, if exists, delete it, then create a new one
+      $tempFolder = "$env:ProgramData\OverwatchTimeData\temp"
+      if (Test-Path $tempFolder) {
+        Remove-Item -Path $tempFolder -Recurse -Force
+      }
+      # create temp folder
+      New-Item -Path $env:ProgramData\OverwatchTimeData -Name "temp" -ItemType "directory" -ErrorAction Stop
+
+      # Define the path where you want to extract the ZIP file
+      $extractPath = "$env:ProgramData\OverwatchTimeData\temp"
+
+      # Use Expand-Archive to extract the ZIP file
+      Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+      # Remove the ZIP file
+      Remove-Item -Path $zipPath -Force
+
+      # move the new verison.txt to the OverwatchTimeData folder
+      Move-Item "$extractPath\OverwatchTime-main\version.txt" $versionFile -Force
+
+      # move images folder
+      Move-Item "$extractPath\OverwatchTime-main\images" "$env:ProgramData\OverwatchTimeData" -Force
+
+      # Move executable to folder we made, overwrite if it already exists
+      Copy-Item "$extractPath\OverwatchTime-main\dist\OverwatchTime.exe" "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
+    }
 
 }
 catch {

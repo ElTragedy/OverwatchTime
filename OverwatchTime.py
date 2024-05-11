@@ -23,6 +23,8 @@ start_time = None
 
 # Path variables
 TIME_LOG_PATH = resource_path('csvs/time_log.csv')
+TIME_LOG_FOLDER = resource_path('csvs')
+CLOCK_IN_STATUS_FOLDER = resource_path('csvs')
 CLOCK_IN_STATUS_PATH = resource_path('csvs/clock_in_status.csv')
 IMAGE_DIR = resource_path('images')
 
@@ -64,6 +66,9 @@ def gui_clock_out():
 
 
 def clock_in():
+    # See if the CSV's folder exists, if not, create it
+    if not os.path.exists(TIME_LOG_FOLDER):
+        os.makedirs(TIME_LOG_FOLDER)
     try:
         with open(CLOCK_IN_STATUS_PATH, 'w') as file:
             # Remove what was previously written, write True
@@ -80,6 +85,9 @@ def clock_out(start_time):
     return duration
 
 def check_clocked_in():
+    # Check if the folder exists, if not, create it
+    if not os.path.exists(CLOCK_IN_STATUS_FOLDER):
+        os.makedirs(CLOCK_IN_STATUS_FOLDER)
     try:
         with open(CLOCK_IN_STATUS_PATH, 'r') as file:
             status = file.readline().strip()
@@ -145,9 +153,14 @@ def initialize_app():
         messagebox.showinfo("Welcome Back", "You were clocked in. Please clock out when done.")
     # Check for update
 
-def check_for_update():
-    
-    pass
+def check_and_update():
+    # Check for an exe that is old.
+    try:
+        if os.path.exists("OverwatchTime_old.exe"):
+            os.remove("OverwatchTime_old.exe")
+    except Exception as e:
+        logging.error(e)
+        pass
 
 
 
@@ -203,4 +216,8 @@ initialize_app()
 
 update_weekly_summary()
 
+check_and_update()
+
 root.mainloop()
+
+# Check for a new version of the program
