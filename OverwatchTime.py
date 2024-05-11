@@ -160,8 +160,16 @@ def check_and_update():
     installer_script = resource_path('installer.ps1')
 # Run the version check script
     try:
-        result = subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Unrestricted', check_version_script], capture_output=True, text=True)
-        update_needed = result.stdout.strip().lower() == 'false'
+        # Execute the PowerShell script
+
+        result = subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Unrestricted', check_version_script],
+                            capture_output=True, text=True)
+        # Convert output to boolean (PowerShell outputs True or False as strings)
+        versions_match = result.stdout.strip().lower() == 'true'
+
+        # Determine if an update is needed
+        update_needed = not versions_match
+
     except Exception as e:
         logging.error("Failed to check version: " + str(e))
         update_needed = False  # Assuming no update if there's a failure to check
