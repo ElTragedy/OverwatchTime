@@ -61,14 +61,7 @@ try {
   # from the current version. If so, download the new version from github using wget
   $versionFile = "$env:ProgramData\OverwatchTimeData\version.txt"
 
-  if (Test-Path $versionFile) {
-    #compare the version in the file to the current version
-    $localVersion = Get-Content .\version.txt
-    # wget https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt
-    # and whatever is in content is the version
-    $gitHubVersion = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt" -UseBasicParsing | Select-Object -ExpandProperty Content
-
-    if ($localVersion -ne $gitHubVersion) {
+    if (!.\checkVersion.ps1) {
       Add-Content -Path $logFile -Value "Local version: $localVersion is different from GitHub version: $gitHubVersion"
 
       # download the new version from github
@@ -131,7 +124,6 @@ try {
       Remove-Item -Path $tempFolder -Recurse -Force
 
     }
-  }
   else{
     # The user does not have a version file so we will download the latest version
       Add-Content -Path $logFile -Value "Local version does not exist. Downloading the latest version from GitHub."

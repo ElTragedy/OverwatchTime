@@ -6,6 +6,7 @@ import os
 from PIL import Image, ImageTk
 import random
 import logging
+import subprocess
 
 
 def resource_path(relative_path):
@@ -154,15 +155,41 @@ def initialize_app():
     # Check for update
 
 def check_and_update():
-    # Check for an exe that is old.
+    # Check the version with the github version
+    # There is a checkVersion.ps1 in the overwatchTimeData folder that will check the version, run it
+    # if it returns true there is no update, if it returns false there is an update.
+    # if it returns false, prompt the user to update. then call installer.ps1
+    # if the user doesn't want to update, then just continue with the program.
+    check_version_script = resource_path('checkVersion.ps1')
+    installer_script = resource_path('installer.ps1')
+# Run the version check script
     try:
-        if os.path.exists("OverwatchTime_old.exe"):
-            os.remove("OverwatchTime_old.exe")
+        result = subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Unrestricted', check_version_script], capture_output=True, text=True)
+        update_needed = result.stdout.strip().lower() == 'false'
     except Exception as e:
-        logging.error(e)
-        pass
+        logging.error("Failed to check version: " + str(e))
+        update_needed = False  # Assuming no update if there's a failure to check
 
+    # Prompt for update if needed
+    if update_needed:
+        user_response = messagebox.askyesno("Update Available", "An update is available for OverwatchTime. Do you want to update now?")
+        if user_response:
+            try:
+                # Run the installer script
+                subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Unrestricted', installer_script])
+            except Exception as e:
+                logging.error("Update installation failed: " + str(e))
+        else:
+            logging.info("User chose not to update.")
 
+    # Check for an old executable and remove it
+    try:
+        old_exe_path = "OverwatchTime_old.exe"
+        if os.path.exists(old_exe_path):
+            os.remove(old_exe_path)
+            logging.info("Removed old executable.")
+    except Exception as e:
+        logging.error("Failed to remove old executable: " + str(e))
 
 
 def display_random_image():
