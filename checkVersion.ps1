@@ -1,21 +1,45 @@
 # Checks version. Returns True if versions match, otherwise False
 
-# make a boolean and set to false.
+
+# Check if we are currently running with administrative privileges
+if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    # Create a new process object that starts PowerShell with elevated privileges
+    $newProcess = New-Object System.Diagnostics.ProcessStartInfo "PowerShell"
+    $scriptPath = $MyInvocation.MyCommand.Path
+
+    # Ensure the path is properly escaped
+    $escapedScriptPath = $scriptPath -replace '\\', '\\\\' -replace '"', '\"'
+
+    # Specify the current script path and name as a parameter with a cd command
+    $newProcess.Arguments = "-NoExit -Command `"cd '$CurrentDirectory'; & '$escapedScriptPath'`""
+
+    # Set the working directory of the new process to be the current directory
+    $newProcess.WorkingDirectory = $CurrentDirectory
+
+    # Indicate that the process should be elevated
+    $newProcess.Verb = "runas"
+
+    # Start the new process
+    [System.Diagnostics.Process]::Start($newProcess)
+
+    # Exit from the current, unelevated, process
+    exit
+}
+
+
+
+$versionFile = "$env:ProgramData\OverwatchTimeData\version.txt"
 $versionsMatch = $false
 
-# check if 1. version file exists 2. version in OverwatchTimeData is different
-# from the current version. If so, download the new version from github using wget
-$versionFile = "$env:ProgramData\OverwatchTimeData\version.txt"
-
 if (Test-Path $versionFile) {
-    #compare the version in the file to the current version
-    $localVersion = Get-Content $versionFile 
-    # wget https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt
-    # and whatever is in content is the version
-    $gitHubVersion = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt" -UseBasicParsing | Select-Object -ExpandProperty Content
-
-    if ($localVersion -eq $gitHubVersion) {
-        $versionsMatch = $true
+    $localVersion = Get-Content $versionFile
+    try {
+        $gitHubVersion = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ElTragedy/OverwatchTime/main/version.txt" -UseBasicParsing | Select-Object -ExpandProperty Content
+        if ($localVersion -eq $gitHubVersion) {
+            $versionsMatch = $true
+        }
+    } catch {
+        Write-Error "Error accessing GitHub version: $_"
     }
 }
 

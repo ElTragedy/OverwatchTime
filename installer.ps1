@@ -55,13 +55,15 @@ try {
     Copy-Item "$CurrentDirectory\install.log" "$env:ProgramData\OverwatchTimeData" -Force
     Copy-Item "$CurrentDirectory\README.md" "$env:ProgramData\OverwatchTimeData" -Force
     Copy-Item "$CurrentDirectory\installer.ps1" "$env:ProgramData\OverwatchTimeData" -Force
+    Copy-Item "$CurrentDirectory\checkVersion.ps1" "$env:ProgramData\OverwatchTimeData" -Force
   }
 
   # check if 1. version file exists 2. version in OverwatchTimeData is different
   # from the current version. If so, download the new version from github using wget
   $versionFile = "$env:ProgramData\OverwatchTimeData\version.txt"
+  $versionsMatch = ./checkVersion.ps1
 
-    if (!.\checkVersion.ps1) {
+    if ($versionsMatch -eq $false) {
       Add-Content -Path $logFile -Value "Local version: $localVersion is different from GitHub version: $gitHubVersion"
 
       # download the new version from github
@@ -112,10 +114,11 @@ try {
       Move-Item "$tempFolder\OverwatchTime-main\images" "$env:ProgramData\OverwatchTimeData" -Force
 
       # Rename the old exe that is in StartUpFolder\OverwatchTime to OverwatchTime_old.exe
-      $oldExe = "$StartUpFolder\OverwatchTime\OverwatchTime.exe"
-      Move-Item $oldExe "$StartUpFolder\OverwatchTime\OverwatchTime_old.exe" -Force
-
-      # Move executable to folder we made, overwrite if it already exists
+      # Check for old exe, if does not exist then do nothing
+      if(Test-Path "$StartUpFolder\OverwatchTime\OverwatchTime.exe") {
+        $oldExe = "$StartUpFolder\OverwatchTime\OverwatchTime.exe"
+        Move-Item $oldExe "$StartUpFolder\OverwatchTime\OverwatchTime_old.exe" -Force
+      }
 
       # Exe should be in StartUpFolder\OverwatchTime
       Copy-Item "$tempFolder\OverwatchTime-main\dist\OverwatchTime.exe" "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
