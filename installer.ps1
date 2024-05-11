@@ -49,8 +49,12 @@ try {
     # Create a new folder in program data
     New-Item -Path $env:ProgramData -Name "OverwatchTimeData" -ItemType "directory" -ErrorAction Stop
     Add-Content -Path $logFile -Value "Directory created at $env:ProgramData\OverwatchTimeData"
-    New-TEm -Path $env:ProgramData\OverwatchTimeData -Name "csvs" -ItemType "directory" -ErrorAction Stop
+    New-Item -Path $env:ProgramData\OverwatchTimeData -Name "csvs" -ItemType "directory" -ErrorAction Stop
     Add-Content -Path $logFile -Value "Directory created at $env:ProgramData\OverwatchTimeData\csvs"
+    # add a copy of installer.ps1 in current working directory ot this location. Also install.log, READ.me
+    Copy-Item "$CurrentDirectory\install.log" "$env:ProgramData\OverwatchTimeData" -Force
+    Copy-Item "$CurrentDirectory\README.md" "$env:ProgramData\OverwatchTimeData" -Force
+    Copy-Item "$CurrentDirectory\installer.ps1" "$env:ProgramData\OverwatchTimeData" -Force
   }
 
   # check if 1. version file exists 2. version in OverwatchTimeData is different
@@ -87,11 +91,8 @@ try {
       # create temp folder
       New-Item -Path $env:ProgramData\OverwatchTimeData -Name "temp" -ItemType "directory" -ErrorAction Stop
 
-      # Define the path where you want to extract the ZIP file
-      $extractPath = "$env:ProgramData\OverwatchTimeData\temp"
-
       # Use Expand-Archive to extract the ZIP file
-      Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+      Expand-Archive -Path $zipPath -DestinationPath $tempFolder -Force
 
       # Remove the ZIP file
       Remove-Item -Path $zipPath -Force
@@ -106,7 +107,7 @@ try {
       }
 
       # move the new verison.txt to the OverwatchTimeData folder
-      Move-Item "$extractPath\OverwatchTime-main\version.txt" $versionFile -Force
+      Move-Item "$tempFolder\OverwatchTime-main\version.txt" $versionFile -Force
       Add-Content -Path $logFile -Value "Moved new version.txt to $versionFile"
 
       # delete the old images folder, if it exists
@@ -115,7 +116,7 @@ try {
       }
 
       # move images folder
-      Move-Item "$extractPath\OverwatchTime-main\images" "$env:ProgramData\OverwatchTimeData" -Force
+      Move-Item "$tempFolder\OverwatchTime-main\images" "$env:ProgramData\OverwatchTimeData" -Force
 
       # Rename the old exe that is in StartUpFolder\OverwatchTime to OverwatchTime_old.exe
       $oldExe = "$StartUpFolder\OverwatchTime\OverwatchTime.exe"
@@ -124,10 +125,11 @@ try {
       # Move executable to folder we made, overwrite if it already exists
 
       # Exe should be in StartUpFolder\OverwatchTime
+      Copy-Item "$tempFolder\OverwatchTime-main\dist\OverwatchTime.exe" "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
 
-      Copy-Item "$extractPath\OverwatchTime-main\dist\OverwatchTime.exe" "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
+      # Remove the temp folder
+      Remove-Item -Path $tempFolder -Recurse -Force
 
-      # terminates, have it check for the old exe and delete it
     }
   }
   else{
@@ -171,6 +173,9 @@ try {
 
       # Move executable to folder we made, overwrite if it already exists
       Copy-Item "$extractPath\OverwatchTime-main\dist\OverwatchTime.exe" "$StartUpFolder\OverwatchTime" -Force -ErrorAction Stop
+
+      # Remove the temp folder
+      Remove-Item -Path $tempFolder -Recurse -Force
     }
 
 }
