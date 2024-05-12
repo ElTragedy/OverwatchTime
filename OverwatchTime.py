@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
 
 LOG_FILE_PATH = os.path.join(os.getenv('ProgramData'), 'OverwatchTimeData', 'MainProgram.log')
-logging.basicConfig(filename=LOG_FILE_PATH, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+#logging.basicConfig(filename=LOG_FILE_PATH, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 root = tk.Tk()
 
