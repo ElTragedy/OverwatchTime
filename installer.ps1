@@ -164,6 +164,11 @@ try {
       Move-Item "$extractPath\OverwatchTime-main\version.txt" $versionFile -Force
 
       # move images folder
+      # if images folder exists, delete it and replace it
+      if(Test-Path "$env:ProgramData\OverwatchTimeData\images") {
+        Remove-Item -Path "$env:ProgramData\OverwatchTimeData\images" -Recurse -Force
+      }
+
       Move-Item "$extractPath\OverwatchTime-main\images" "$env:ProgramData\OverwatchTimeData" -Force
 
       # Move executable to folder we made, overwrite if it already exists
