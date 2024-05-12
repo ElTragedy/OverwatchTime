@@ -188,10 +188,13 @@ def check_and_update():
 
     # Check for an old executable and remove it
     try:
-        old_exe_path = "OverwatchTime_old.exe"
+        old_exe_path = "./OverwatchTime_old.exe"
         if os.path.exists(old_exe_path):
             os.remove(old_exe_path)
             logging.info("Removed old executable.")
+        else:
+            logging.info("No old executable found.")
+        
     except Exception as e:
         logging.error("Failed to remove old executable: " + str(e))
 
