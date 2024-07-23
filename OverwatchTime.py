@@ -8,10 +8,18 @@ import random
 import logging
 
 
+###
+# resource_path
+#
+# param: relative_path - the path of the terminal is
+# return: returns the path of the programData folder and where the 
+#         OverwatchTimeData must be located.
+###
 def resource_path(relative_path):
     return os.path.join(os.getenv('ProgramData'), 'OverwatchTimeData', relative_path)
 
 
+# This is the path for where the logs should be
 LOG_FILE_PATH = os.path.join(os.getenv('ProgramData'), 'OverwatchTimeData', 'MainProgram.log')
 logging.basicConfig(filename=LOG_FILE_PATH, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -26,7 +34,11 @@ TIME_LOG_PATH = resource_path('csvs/time_log.csv')
 CLOCK_IN_STATUS_PATH = resource_path('csvs/clock_in_status.csv')
 IMAGE_DIR = resource_path('images')
 
-# Create the csv file if it doesn't exist
+###
+# read_sessions
+#
+# return: the csv returned in list form.
+###
 def read_sessions():
     if not os.path.exists(TIME_LOG_PATH):
         return []
@@ -35,7 +47,12 @@ def read_sessions():
         sessions = list(reader)
     return sessions
 
-# GUI
+###
+# gui_clock_in 
+#
+# This is a clock in function that operates when the clock in function is
+# called. This just makes a msg box that tells you to clock in or out.
+###
 def gui_clock_in():
     if check_clocked_in():
         logging.error("User tried to clock in while already clocked in.")
@@ -47,7 +64,12 @@ def gui_clock_in():
         clock_in_button.config(state="disabled")
         clock_out_button.config(state="normal")
 
-
+###
+# gui_clock_out
+# 
+# This is a function that saves the session, makes a msg box notifying the user
+# that they are clocking out, and sets the program state to clocked out.
+###
 def gui_clock_out():
     if not check_clocked_in():
         messagebox.showerror("Error", "You must clock in first!")
@@ -63,6 +85,12 @@ def gui_clock_out():
         clock_out_button.config(state="disabled")
 
 
+###
+# clock_in
+#
+# This clocks the user in to the primary function. It does this by writing
+# true into the "clocked in or not" csv
+###
 def clock_in():
     try:
         with open(CLOCK_IN_STATUS_PATH, 'w') as file:
@@ -74,11 +102,22 @@ def clock_in():
             file.write('True')
     return datetime.datetime.now()
 
+###
+# clock_out
+#
+# param: start_time - this is the time when the session started.
+# return: duration - how long the program was running based on start - end.
+###
 def clock_out(start_time):
     end_time = datetime.datetime.now()
     duration = end_time - start_time
     return duration
 
+###
+# check_clocked_in
+#
+# return: true or false, based on whether or not the person is clocked in
+###
 def check_clocked_in():
     try:
         with open(CLOCK_IN_STATUS_PATH, 'r') as file:
@@ -87,18 +126,32 @@ def check_clocked_in():
     except FileNotFoundError:
         return False
 
-
+###
+# save_session
+#
+# param: duration - how long the user has been logged in for currently
+###
 def save_session(duration):
     with open(TIME_LOG_PATH, 'a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([datetime.date.today(), duration.total_seconds()])
 
-
+###
+# weekly_summary
+#
+# param: year - what the current year is
+# param: week_number - what week it is in the year
+###
 def weekly_summary(year, week_number):
     sessions = read_sessions()
     weekly_total = sum(float(duration) for date, duration in sessions if datetime.datetime.strptime(date, '%Y-%m-%d').isocalendar()[:2] == (year, week_number))
     return weekly_total
 
+###
+# update_weekly_summary
+#
+# calculates how long the user has been clocked in for
+###
 def update_weekly_summary():
     current_year, current_week, _ = datetime.datetime.now().isocalendar()
     if os.path.exists(TIME_LOG_PATH):
@@ -108,6 +161,11 @@ def update_weekly_summary():
     else:
         summary_label.config(text="No data available for this week.")
 
+###
+# on_closing
+#
+# if the user is currently clocked in, then ensure csv reflects that
+###
 def on_closing():
     if check_clocked_in():
         with open(CLOCK_IN_STATUS_PATH, 'w') as file:
@@ -115,6 +173,14 @@ def on_closing():
             file.write(str(datetime.datetime.now()))
     root.destroy()
 
+###
+# format_duration
+# 
+# This grabs the time in the CSV and converts it to a time format that humans
+# like, i.e. 0 days X hours, Y mins, Z seconds
+#
+# param: seconds - how long in seconds the CSV reflects
+###
 def format_duration(seconds):
     # Convert total seconds into respective time units
     days, seconds = divmod(seconds, 86400)  # 86400 seconds in a day
@@ -134,6 +200,13 @@ def format_duration(seconds):
 
     return ", ".join(duration_parts)
 
+###
+# initialize_app
+#
+# this is necessary processes that need to be done before the program is able
+# to run. In this instance, we need to check and see if the user is clocked in 
+# or not.
+###
 def initialize_app():
     global start_time
     if check_clocked_in():
@@ -146,12 +219,14 @@ def initialize_app():
     # Check for update
 
 def check_for_update():
-    
     pass
 
-
-
-
+###
+# display_random_image
+#
+# this picks a random image out of the images folder and sets it as the lock
+# screen for that day
+###
 def display_random_image():
     #image_dir = resource_path("images")
     png_files = [f for f in os.listdir(IMAGE_DIR) if f.endswith('.png')]
