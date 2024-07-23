@@ -33,6 +33,9 @@ Add-Content -Path $logFile -Value "Log file created at $logFile"
 
 $StartUpFolder = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs"
 
+# Program should have 2 use cases.
+# First time install and a version update
+
 try {
     # Check if the OverwatchTime directory exists in the start up folder
     if (-not (Test-Path "$StartUpFolder\OverwatchTime")) {
@@ -41,6 +44,19 @@ try {
         Add-Content -Path $logFile -Value "Directory created at $StartUpFolder\OverwatchTime"
     }
 
+  # Check if the OverwatchTimeData directory exists in program data
+  if (-not (Test-Path "$env:ProgramData\OverwatchTimeData")) {
+    # Create a new folder in program data
+    New-Item -Path $env:ProgramData -Name "OverwatchTimeData" -ItemType "directory" -ErrorAction Stop
+    Add-Content -Path $logFile -Value "Directory created at $env:ProgramData\OverwatchTimeData"
+    New-Item -Path $env:ProgramData\OverwatchTimeData -Name "csvs" -ItemType "directory" -ErrorAction Stop
+    Add-Content -Path $logFile -Value "Directory created at $env:ProgramData\OverwatchTimeData\csvs"
+    # add a copy of installer.ps1 in current working directory ot this location. Also install.log, READ.me
+    Copy-Item "$CurrentDirectory\install.log" "$env:ProgramData\OverwatchTimeData" -Force
+    Copy-Item "$CurrentDirectory\README.md" "$env:ProgramData\OverwatchTimeData" -Force
+    Copy-Item "$CurrentDirectory\installer.ps1" "$env:ProgramData\OverwatchTimeData" -Force
+    Copy-Item "$CurrentDirectory\checkVersion.ps1" "$env:ProgramData\OverwatchTimeData" -Force
+  }
     # Check if the OverwatchTimeData directory exists in program data
     if (-not (Test-Path "$env:ProgramData\OverwatchTimeData")) {
         # Create a new folder in program data

@@ -6,6 +6,7 @@ import os
 from PIL import Image, ImageTk
 import random
 import logging
+import subprocess
 
 
 ###
@@ -21,7 +22,7 @@ def resource_path(relative_path):
 
 # This is the path for where the logs should be
 LOG_FILE_PATH = os.path.join(os.getenv('ProgramData'), 'OverwatchTimeData', 'MainProgram.log')
-logging.basicConfig(filename=LOG_FILE_PATH, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+#logging.basicConfig(filename=LOG_FILE_PATH, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 root = tk.Tk()
 
@@ -31,6 +32,8 @@ start_time = None
 
 # Path variables
 TIME_LOG_PATH = resource_path('csvs/time_log.csv')
+TIME_LOG_FOLDER = resource_path('csvs')
+CLOCK_IN_STATUS_FOLDER = resource_path('csvs')
 CLOCK_IN_STATUS_PATH = resource_path('csvs/clock_in_status.csv')
 IMAGE_DIR = resource_path('images')
 
@@ -92,6 +95,9 @@ def gui_clock_out():
 # true into the "clocked in or not" csv
 ###
 def clock_in():
+    # See if the CSV's folder exists, if not, create it
+    if not os.path.exists(TIME_LOG_FOLDER):
+        os.makedirs(TIME_LOG_FOLDER)
     try:
         with open(CLOCK_IN_STATUS_PATH, 'w') as file:
             # Remove what was previously written, write True
@@ -119,6 +125,9 @@ def clock_out(start_time):
 # return: true or false, based on whether or not the person is clocked in
 ###
 def check_clocked_in():
+    # Check if the folder exists, if not, create it
+    if not os.path.exists(CLOCK_IN_STATUS_FOLDER):
+        os.makedirs(CLOCK_IN_STATUS_FOLDER)
     try:
         with open(CLOCK_IN_STATUS_PATH, 'r') as file:
             status = file.readline().strip()
@@ -218,15 +227,51 @@ def initialize_app():
         messagebox.showinfo("Welcome Back", "You were clocked in. Please clock out when done.")
     # Check for update
 
-def check_for_update():
-    pass
+def check_and_update():
+    # if the user doesn't want to update, then just continue with the program.
+    check_version_script = resource_path('checkVersion.ps1')
+    installer_script = resource_path('installer.ps1')
+# Run the version check script
+    try:
+        # Execute the PowerShell script
 
-###
-# display_random_image
-#
-# this picks a random image out of the images folder and sets it as the lock
-# screen for that day
-###
+        result = subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Unrestricted', check_version_script],
+                            capture_output=True, text=True)
+        # Convert output to boolean (PowerShell outputs True or False as strings)
+        versions_match = result.stdout.strip().lower() == 'true'
+
+        # Determine if an update is needed
+        update_needed = not versions_match
+
+    except Exception as e:
+        logging.error("Failed to check version: " + str(e))
+        update_needed = False  # Assuming no update if there's a failure to check
+
+    # Prompt for update if needed
+    if update_needed:
+        user_response = messagebox.askyesno("Update Available", "An update is available for OverwatchTime. Do you want to update now?")
+        if user_response:
+            try:
+                # Run the installer script
+                subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Unrestricted', installer_script])
+            except Exception as e:
+                logging.error("Update installation failed: " + str(e))
+        else:
+            logging.info("User chose not to update.")
+
+    # Check for an old executable and remove it
+    try:
+        old_exe_path = "./OverwatchTime_old.exe"
+        if os.path.exists(old_exe_path):
+            os.remove(old_exe_path)
+            logging.info("Removed old executable.")
+        else:
+            logging.info("No old executable found.")
+        
+    except Exception as e:
+        logging.error("Failed to remove old executable: " + str(e))
+
+
 def display_random_image():
     #image_dir = resource_path("images")
     png_files = [f for f in os.listdir(IMAGE_DIR) if f.endswith('.png')]
@@ -278,4 +323,8 @@ initialize_app()
 
 update_weekly_summary()
 
+check_and_update()
+
 root.mainloop()
+
+# Check for a new version of the program
