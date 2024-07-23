@@ -57,12 +57,6 @@ try {
     Copy-Item "$CurrentDirectory\installer.ps1" "$env:ProgramData\OverwatchTimeData" -Force
     Copy-Item "$CurrentDirectory\checkVersion.ps1" "$env:ProgramData\OverwatchTimeData" -Force
   }
-    # Check if the OverwatchTimeData directory exists in program data
-    if (-not (Test-Path "$env:ProgramData\OverwatchTimeData")) {
-        # Create a new folder in program data
-        New-Item -Path $env:ProgramData -Name "OverwatchTimeData" -ItemType "directory" -ErrorAction Stop
-        Add-Content -Path $logFile -Value "Directory created at $env:ProgramData\OverwatchTimeData"
-    }
 
     # Check if version file exists and compare the version in OverwatchTimeData with the current version
     $versionFile = "$env:ProgramData\OverwatchTimeData\version.txt"
