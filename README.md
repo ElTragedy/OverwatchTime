@@ -24,11 +24,9 @@ auto resize any image so long as it is a png.
 
 
 # Command for my reference:
-pyinstaller --onefile --icon=OverwatchTime.ico OverwatchTime.py
+pyinstaller --onefile --windowed --name OverwatchTime .\runme.py --add-data "overwatch_time\resources;overwatch_time/resources" --paths . --icon overwatch_time\resources\images\download.ico
+
 
 # TODO:
 create a VM and test out the 3 use cases:
-- Run the exe after there is an update and update it from the exe itself
-- run the installer when there is no need to run it
 
-- Made changes to the readme to test the EXE

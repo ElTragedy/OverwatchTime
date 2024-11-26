@@ -2,8 +2,6 @@
 
 import os
 import random
-import subprocess
-import logging
 import datetime
 
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -47,9 +45,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # Update weekly summary
         self.update_weekly_summary()
 
-        # Check for updates
-        self.check_and_update()
-
     def center_window(self, width, height):
         """
         Center the window on the screen.
@@ -78,8 +73,6 @@ class MainWindow(QtWidgets.QMainWindow):
             label.setPixmap(pixmap)
             label.setAlignment(QtCore.Qt.AlignCenter)
             self.layout.addWidget(label)
-        else:
-            logging.warning("No PNG images found in image directory.")
 
     def create_buttons(self):
         """
@@ -107,7 +100,6 @@ class MainWindow(QtWidgets.QMainWindow):
         Handle the Clock In button click event.
         """
         if self.time_tracker.is_clocked_in():
-            logging.error("User tried to clock in while already clocked in.")
             QtWidgets.QMessageBox.critical(self, "Error", "You are already clocked in, please clock out before trying to clock in again.")
         else:
             try:
@@ -159,46 +151,6 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.clock_in_button.setEnabled(True)
             self.clock_out_button.setEnabled(False)
-
-    def check_and_update(self):
-        """
-        Check for updates and prompt the user if an update is available.
-        """
-        check_version_script = resource_path('checkVersion.ps1')
-        installer_script = resource_path('installer.ps1')
-        try:
-            result = subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Unrestricted', check_version_script],
-                                    capture_output=True, text=True)
-            versions_match = result.stdout.strip().lower() == 'true'
-            update_needed = not versions_match
-        except Exception as e:
-            logging.error("Failed to check version: " + str(e))
-            update_needed = False  # Assuming no update if there's a failure to check
-
-        if update_needed:
-            reply = QtWidgets.QMessageBox.question(
-                self,
-                'Update Available',
-                'An update is available for OverwatchTime. Do you want to update now?',
-                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                QtWidgets.QMessageBox.No
-            )
-            if reply == QtWidgets.QMessageBox.Yes:
-                try:
-                    subprocess.run(['powershell.exe', '-ExecutionPolicy', 'Unrestricted', installer_script])
-                except Exception as e:
-                    logging.error("Update installation failed: " + str(e))
-            else:
-                logging.info("User chose not to update.")
-        try:
-            old_exe_path = "./OverwatchTime_old.exe"
-            if os.path.exists(old_exe_path):
-                os.remove(old_exe_path)
-                logging.info("Removed old executable.")
-            else:
-                logging.info("No old executable found.")
-        except Exception as e:
-            logging.error("Failed to remove old executable: " + str(e))
 
     def on_closing(self):
         """

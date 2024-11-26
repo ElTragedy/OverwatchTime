@@ -2,36 +2,47 @@
 
 import sys
 import os
-import logging
 
 from PyQt5 import QtWidgets
 
 from .gui import MainWindow
-from .utils import data_path
+from .update_checker import check_for_update
+
+def ensure_directory_exists(path):
+    """
+    Ensure the directory for a given path exists. If not, create it.
+
+    Parameters:
+        path (str): The path to the directory or file.
+    """
+    directory = os.path.dirname(path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+# Handle PyInstaller's frozen state for paths
+if getattr(sys, 'frozen', False):
+    current_dir = sys._MEIPASS
+else:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+print(f"Current working directory: {current_dir}")
+
 
 def main():
     """
     Main function to start the application.
     """
-    # Setup logging
-    LOG_FILE_PATH = data_path('MainProgram.log')
+    check_for_update()
 
-    # Ensure the data directory exists
-    LOG_DIR = os.path.dirname(LOG_FILE_PATH)
-    if not os.path.exists(LOG_DIR):
-        os.makedirs(LOG_DIR)
-
-    logging.basicConfig(
-        filename=LOG_FILE_PATH,
-        level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
-
+    # Start the PyQt application
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
 
-if __name__ == '__main__':
+    try:
+        sys.exit(app.exec_())
+    except Exception as e:
+        raise e
+
+if __name__ == "__main__":
     main()
-

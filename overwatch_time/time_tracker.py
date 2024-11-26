@@ -2,7 +2,6 @@
 import os
 import csv
 import datetime
-import logging
 
 from .utils import data_path
 
@@ -31,9 +30,7 @@ class TimeTracker:
                 file.write('\n')
                 file.write(str(datetime.datetime.now()))
             self.start_time = datetime.datetime.now()
-            logging.info(f"User clocked in at {self.start_time}")
         except Exception as e:
-            logging.error(f"Failed to clock in: {e}")
             raise e
 
     def clock_out(self):
@@ -49,10 +46,8 @@ class TimeTracker:
             self.save_session(duration)
             with open(self.CLOCK_IN_STATUS_PATH, 'w') as file:
                 file.write('False')
-            logging.info(f"User clocked out at {end_time} after {duration}")
             return duration
         except Exception as e:
-            logging.error(f"Failed to clock out: {e}")
             raise e
 
     def is_clocked_in(self):
@@ -69,7 +64,6 @@ class TimeTracker:
         except FileNotFoundError:
             return False
         except Exception as e:
-            logging.error(f"Failed to check clock-in status: {e}")
             raise e
 
     def save_session(self, duration):
@@ -83,9 +77,7 @@ class TimeTracker:
             with open(self.TIME_LOG_PATH, 'a', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerow([datetime.date.today(), duration.total_seconds()])
-            logging.info(f"Session saved with duration {duration}")
         except Exception as e:
-            logging.error(f"Failed to save session: {e}")
             raise e
 
     def read_sessions(self):
@@ -103,7 +95,6 @@ class TimeTracker:
                 sessions = list(reader)
             return sessions
         except Exception as e:
-            logging.error(f"Failed to read sessions: {e}")
             raise e
 
     def weekly_summary(self, year, week_number):
@@ -120,13 +111,10 @@ class TimeTracker:
         sessions = self.read_sessions()
         total_seconds = 0.0
         for date_str, duration_str in sessions:
-            try:
-                session_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
-                session_year, session_week, _ = session_date.isocalendar()
-                if (session_year, session_week) == (year, week_number):
-                    total_seconds += float(duration_str)
-            except Exception as e:
-                logging.error(f"Failed to process session {date_str}, {duration_str}: {e}")
+            session_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+            session_year, session_week, _ = session_date.isocalendar()
+            if (session_year, session_week) == (year, week_number):
+                total_seconds += float(duration_str)
         return total_seconds
 
     def get_start_time(self):
@@ -144,7 +132,6 @@ class TimeTracker:
                 else:
                     self.start_time = datetime.datetime.now()
         except Exception as e:
-            logging.error(f"Failed to get start time: {e}")
             self.start_time = datetime.datetime.now()
         return self.start_time
 

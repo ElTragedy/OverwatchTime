@@ -25,8 +25,12 @@ def data_path(relative_path):
         str: The absolute path to the data file.
     """
     base_data_path = os.path.join(os.getenv('APPDATA'), 'OverwatchTimeData')
-    return os.path.join(base_data_path, relative_path)
+    
+    # Ensure the base data path exists
+    if not os.path.exists(base_data_path):
+        os.makedirs(base_data_path)
 
+    return os.path.join(base_data_path, relative_path)
 
 
 

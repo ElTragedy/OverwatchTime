@@ -3,7 +3,7 @@
 [Setup]
 ; General settings
 AppName=OverwatchTime
-AppVersion=1.0.0
+AppVersion=1.1.0  ; Update this version number for each release
 DefaultDirName={pf}\OverwatchTime
 DefaultGroupName=OverwatchTime
 DisableProgramGroupPage=yes
@@ -12,6 +12,7 @@ OutputBaseFilename=OverwatchTimeInstaller
 SetupIconFile=overwatch_time\resources\images\download.ico
 Compression=lzma
 SolidCompression=yes
+AppUpdatesURL=https://github.com/ElTragedy/OverwatchTime/releases/latest  ; Redirect to your GitHub releases page
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
